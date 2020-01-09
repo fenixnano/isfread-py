@@ -9,8 +9,18 @@ Short usage example
 In linux command line::
 
     $ python isfread.py file.isf > ascii.dat 
+    
+    
+    
+modified by fenixnano on 2019:
+tweak the code so it can work in python 3 as well as python 2.7
 
-Author
+required module: 
+six 
+
+
+
+original Author
 ------
 Gustavo Pasquevich - 2011 
 UNLP-CONICET-Argentina
