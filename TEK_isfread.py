@@ -1,5 +1,11 @@
 #!/usr/bin/env python
 #coding: utf-8
+from __future__ import absolute_import
+from __future__ import print_function
+import struct
+from six.moves import range
+from io import open
+
 
 """ Python script for read data from a Tektronix ".ISF" files.
 
@@ -35,6 +41,8 @@ References:
 [TekMan] Tektronix Manuals, "Programmer Manual. TDS3000, TDS3000B, and  
             TDS3000C Series Digital Phosphor Oscilloscopes", 071-0381-03.
             www.tektronix.com
+            
+Gustavo Pasquevich'sisfread  [https://github.com/gpasquev/isfread-py]
 ---------------------------------------------------------------------------
 
 Contact: Gustavo Pasquevich, Universidad Nacional de La Plata - Argentina
@@ -43,23 +51,26 @@ Contact: Gustavo Pasquevich, Universidad Nacional de La Plata - Argentina
 
 import struct
 
-__version__= '0.3'  
-__author__= 'Gustavo Pasquevich (2011)'
-__email__= 'gpasquev@fisica.unlp.edu.ar'
+__version__= '0.31'  
+__author__= 'Gustavo Pasquevich (2011), fenixnano(2019)'
+__email__= 'gpasquev@fisica.unlp.edu.ar, fenixnano@gmail.com'
+
+def cmp(a,b):
+    return ((a > b) - (a < b))
+
 
 def isfread(filename):
     """ Read isf file and return x y and head information.
     
     input: 
         string with the ISF-filename.
-
     output:
         Returns a tuple of three elements:
         x - list with the x values 
         y - list with the y values
         head - dictionary with the head-information stored in the file."""
 
-    FID = open(filename,'r')
+    FID = open(filename,'r', encoding="latin-1")
 
     hdata = FID.read(511);		# read first 511 bytes
 
@@ -110,10 +121,10 @@ def isfread(filename):
 
     # The only cases that this code (at this moment) not take into acount.
     if ((head['bytenum'] != 2) or (head['bitnum'] != 16) or 
-    cmp(head['encoding'],'BIN') or cmp(head['binformat'],'RI') or 
+    (cmp(head['encoding'],'BIN') and cmp(head['encoding'],'BINARY'))  or cmp(head['binformat'],'RI') or 
     cmp(head['pointformat'],'Y')):
         FID.close()
-        print 'Unable to process IFS file.'
+        print('Unable to process IFS file.')
          
     # Reading the <Block> part corresponding to the "CURVe" command [TekMan]. 
     # <Block> = ":CURVE #<x><yy..y><data>"
@@ -150,33 +161,33 @@ def isfread(filename):
     # Meanwhile "n2" is the number of bytes to be readed calculated through:
     #                    NumOfPoints x BytePerPoint 
     if n1 != n2:  
-        print "WARNING: Something is not going as is was planned!!!"
-    string_data=FID.read(n2)
+        print("WARNING: Something is not going as is was planned!!!")
+        
+    FID2 = open(filename,'rb')
+    string_data=FID2.read(n2)
+
     data=struct.unpack(fmt,string_data)
 
     # Absolute values of data obtained as is defined in [Tek-Man] WFMPre:PT_Fmt 
     # command description.  
     v=[yzero + ymult*(y-yoff) for y in data]
-    x=[xzero + xincr*(i-ptoff) for i in xrange(npts)]
+    x=[xzero + xincr*(i-ptoff) for i in range(npts)]
 
 
     FID.close()
     return x,v,head
-    
+
+isfread('MDO_20191127_233635_50KHZ3.0VPPSQUstart.isf')    
+
+
 if __name__ == "__main__":
     import sys
     filein = sys.argv[1]
     x,v,head=isfread(filein)
 
-    print head
+    print(head)
 
-    for i in xrange(len(x)):
-        print '%g %g'%(x[i],v[i])
-
-
-
-
-
-
+    for i in range(len(x)):
+        print('%g %g'%(x[i],v[i]))
 
 
